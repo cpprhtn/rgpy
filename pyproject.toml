@@ -1,0 +1,21 @@
+# pyproject.toml
+[project]
+name = "rgpy"
+version = "0.1.0"
+description = "Rust-powered blazing-fast regex search for Python"
+authors = [
+    {name = "Junwon Lee", email = "cpprhtn@naver.com"}
+]
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "twine>=6.1.0",
+]
+
+[tool.maturin]
+features = ["pcre"]
+
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"

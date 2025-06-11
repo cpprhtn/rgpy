@@ -1,0 +1,22 @@
+# Cargo.toml
+[package]
+name = "rgpy"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "rgpy"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.20.0", features = ["extension-module"] }
+regex = "1.10"
+rayon = "1.7"
+
+# Optional PCRE2 support
+pcre2 = { version = "0.2", optional = true }
+walkdir = "2.5.0"
+
+[features]
+default = []
+pcre = ["pcre2"]
