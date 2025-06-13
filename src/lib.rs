@@ -47,13 +47,16 @@ fn search_file(
     path: &str,
     ignore_case: Option<bool>,
     engine: Option<&str>,
-) -> PyResult<Vec<MatchEntry>> {
+    count: Option<bool>,
+    invert_match: Option<bool>,
+) -> PyResult<PyObject> {
     let use_pcre = engine.unwrap_or("regex") == "pcre2";
     let pattern = if ignore_case.unwrap_or(false) {
         format!("(?i){}", pattern)
     } else {
         pattern.to_string()
     };
+    let invert = invert_match.unwrap_or(false);
 
     let matcher: Box<dyn Matcher> = if use_pcre {
         #[cfg(feature = "pcre")]
@@ -79,7 +82,8 @@ fn search_file(
     let mut results = vec![];
     for (i, line) in reader.lines().enumerate() {
         if let Ok(text) = line {
-            if matcher.is_match(&text) {
+            let matched = matcher.is_match(&text);
+            if matched ^ invert {
                 results.push(MatchEntry {
                     path: path.to_string(),
                     line_number: i + 1,
@@ -89,7 +93,13 @@ fn search_file(
         }
     }
 
-    Ok(results)
+    Python::with_gil(|py| {
+        if count.unwrap_or(false) {
+            Ok((results.len() as u64).into_py(py))
+        } else {
+            Ok(results.into_py(py))
+        }
+    })
 }
 
 #[pyfunction]
@@ -98,13 +108,16 @@ fn search_dir(
     dir: &str,
     ignore_case: Option<bool>,
     engine: Option<&str>,
-) -> PyResult<Vec<MatchEntry>> {
+    count: Option<bool>,
+    invert_match: Option<bool>,
+) -> PyResult<PyObject> {
     let use_pcre = engine.unwrap_or("regex") == "pcre2";
     let pattern = if ignore_case.unwrap_or(false) {
         format!("(?i){}", pattern)
     } else {
         pattern.to_string()
     };
+    let invert = invert_match.unwrap_or(false);
 
     let matcher: Box<dyn Matcher> = if use_pcre {
         #[cfg(feature = "pcre")]
@@ -133,7 +146,8 @@ fn search_dir(
             let reader = BufReader::new(file);
             for (i, line) in reader.lines().enumerate() {
                 if let Ok(text) = line {
-                    if matcher.is_match(&text) {
+                    let matched = matcher.is_match(&text);
+                    if matched ^ invert {
                         results.push(MatchEntry {
                             path: path_str.clone(),
                             line_number: i + 1,
@@ -144,7 +158,14 @@ fn search_dir(
             }
         }
     }
-    Ok(results)
+
+    Python::with_gil(|py| {
+        if count.unwrap_or(false) {
+            Ok((results.len() as u64).into_py(py))
+        } else {
+            Ok(results.into_py(py))
+        }
+    })
 }
 
 #[pymodule]
