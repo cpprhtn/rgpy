@@ -1,7 +1,7 @@
 # pyproject.toml
 [project]
 name = "rgpy"
-version = "0.1.0"
+version = "0.2.1"
 description = "Rust-powered blazing-fast regex search for Python"
 authors = [
     {name = "Junwon Lee", email = "cpprhtn@naver.com"}

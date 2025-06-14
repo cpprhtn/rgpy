@@ -11,6 +11,10 @@ It brings the speed of [`ripgrep`](https://github.com/BurntSushi/ripgrep) and [`
 - Supports both [`regex`](https://docs.rs/regex/) and [`pcre2`](https://docs.rs/pcre2/)
 - Multithreaded line scanning (via Rayon)
 - Easy-to-use Python API
+- Supports:
+  - Count-only mode (`count=True`)
+  - Invert match (`invert_match=True`)
+  - Recursive directory search (`search_dir()`)
 
 ---
 
@@ -43,7 +47,33 @@ results = search_file(
 )
 
 for line in results:
-    print(line)
+    print(f"{line.path}:{line.line_number}: {line.text}")
+```
+
+🔢 Count-only mode
+```python
+from rgpy import search_file
+
+count = search_file("error", "./logs/sample.log", count=True)
+print("Total matches:", count)
+```
+
+🚫 Invert match (return lines that do NOT match)
+```python
+from rgpy import search_file
+
+non_matches = search_file("error", "./logs/sample.log", invert_match=True)
+for line in non_matches:
+    print(f"{line.line_number}: {line.text}")
+```
+
+📂 Recursive search in a directory
+```python
+from rgpy import search_dir
+
+results = search_dir("timeout", "./logs", ignore_case=True)
+for line in results:
+    print(f"{line.path}:{line.line_number}: {line.text}")
 ```
 
 ---
@@ -53,9 +83,11 @@ for line in results:
 | Parameter     | Type    | Description                          |
 |---------------|---------|--------------------------------------|
 | `pattern`     | `str`   | Regex pattern to search              |
-| `path`        | `str`   | Path to the target file              |
+| `path`/`dir`        | `str`   | File path (`search_file`) or directory (`search_dir`)|
 | `engine`      | `str`   | `"regex"` (default) or `"pcre2"`     |
 | `ignore_case` | `bool`  | Case-insensitive matching (optional) |
+| `count` | `bool`  | Return number of matches only (optional) |
+| `iinvert_match` | `bool`  | Return lines that do not match the pattern (optional) |
 
 ---
 
