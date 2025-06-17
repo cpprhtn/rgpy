@@ -76,6 +76,30 @@ for line in results:
     print(f"{line.path}:{line.line_number}: {line.text}")
 ```
 
+`multiprocessing` support
+```python
+from multiprocessing import Pool, cpu_count
+from rgpy import search_file
+
+LOG_FILE = "./logs/sample.log"
+
+with open(LOG_FILE, "r", encoding="utf-8", errors="ignore") as f:
+        lines = f.readlines()
+
+chunk_size = len(lines) // cpu_count()
+chunks = [lines[i:i + chunk_size] for i in range(0, len(lines), chunk_size)]
+
+with Pool() as pool:
+    counts = pool.map(search_file("error", LOG_FILE, invert_match=True), chunks)
+```
+
+---
+
+## 🛠 Engine Options
+
+- `"regex"`: Rust’s built-in, fast and safe regex engine (no backreferences or lookbehind)
+- `"pcre2"`: Perl-compatible regex with full support for lookaround, backreference, etc. (slightly slower)
+
 ---
 
 ## ⚙️ Arguments
@@ -87,14 +111,7 @@ for line in results:
 | `engine`      | `str`   | `"regex"` (default) or `"pcre2"`     |
 | `ignore_case` | `bool`  | Case-insensitive matching (optional) |
 | `count` | `bool`  | Return number of matches only (optional) |
-| `iinvert_match` | `bool`  | Return lines that do not match the pattern (optional) |
-
----
-
-## 🛠 Engine Options
-
-- `"regex"`: Rust’s built-in, fast and safe regex engine (no backreferences or lookbehind)
-- `"pcre2"`: Perl-compatible regex with full support for lookaround, backreference, etc. (slightly slower)
+| `invert_match` | `bool`  | Return lines that do not match the pattern (optional) |
 
 ---
 
@@ -102,6 +119,16 @@ for line in results:
 
 rgpy uses **Rust + Rayon** for multithreaded file processing.  
 This makes it significantly faster than Python’s built-in `re` module, especially for large files.
+Without multiprocessing, `rgpy` is about 24% faster than `re`.
+
+== Time Comparison (in seconds) ==  
+rgpy:                  3.463s  
+rgpy.compile:          3.466s  
+rgpy.compile + mp:     2.441s  
+re:                    4.541s  
+re.compile:            4.228s  
+re.compile + mp:       1.898s  
+
 
 ---
 

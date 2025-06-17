@@ -127,18 +127,19 @@ impl MatcherWrapper {
         let invert = invert_match.unwrap_or(false);
         let matcher = self.matcher.clone();
 
-        let entries: Vec<_> = WalkDir::new(dir)
+        let files: Vec<_> = WalkDir::new(dir)
             .into_iter()
             .filter_map(|e| e.ok())
             .filter(|e| e.file_type().is_file())
-            .map(|e| e.path().display().to_string())
+            .map(|e| e.path().to_path_buf())
             .collect();
 
         let results: Vec<MatchEntry> = py.allow_threads(|| {
-            entries
+            files
                 .par_iter()
-                .flat_map(|path_str| {
-                    let file = File::open(path_str);
+                .flat_map(|path_buf| {
+                    let path_str = path_buf.display().to_string();
+                    let file = File::open(path_buf);
                     if let Ok(file) = file {
                         let reader = BufReader::new(file);
                         reader
@@ -158,9 +159,9 @@ impl MatcherWrapper {
                                     }
                                 })
                             })
-                            .collect()
+                            .collect::<Vec<_>>()
                     } else {
-                        vec![]
+                        Vec::new()
                     }
                 })
                 .collect()
@@ -172,6 +173,7 @@ impl MatcherWrapper {
             Ok(results.into_py(py))
         }
     }
+
 }
 
 #[pyfunction]
